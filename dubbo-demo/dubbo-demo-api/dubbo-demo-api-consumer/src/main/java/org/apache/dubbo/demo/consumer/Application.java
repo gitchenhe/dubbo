@@ -27,7 +27,10 @@ public class Application {
     public static void main(String[] args) {
         ReferenceConfig<DemoService> reference = new ReferenceConfig<>();
         reference.setApplication(new ApplicationConfig("dubbo-demo-api-consumer"));
-        reference.setRegistry(new RegistryConfig("zookeeper://127.0.0.1:2181"));
+        RegistryConfig registryConfig = new RegistryConfig("redis://172.19.60.138:6379");
+        registryConfig.setUsername("admin");
+        registryConfig.setPassword("123456");
+        reference.setRegistry(registryConfig);
         reference.setInterface(DemoService.class);
         DemoService service = reference.get();
         String message = service.sayHello("dubbo");

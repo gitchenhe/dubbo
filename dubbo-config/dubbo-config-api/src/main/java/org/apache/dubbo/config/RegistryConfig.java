@@ -32,7 +32,7 @@ import static org.apache.dubbo.config.Constants.ZOOKEEPER_PROTOCOL;
 import static org.apache.dubbo.registry.Constants.EXTRA_KEYS_KEY;
 
 /**
- * RegistryConfig
+ * 注册中心配置
  *
  * @export
  */
@@ -42,32 +42,32 @@ public class RegistryConfig extends AbstractConfig {
     private static final long serialVersionUID = 5508512956753757169L;
 
     /**
-     * Register center address
+     * 注册中心地址
      */
     private String address;
 
     /**
-     * Username to login register center
+     * 注册中心用户名
      */
     private String username;
 
     /**
-     * Password to login register center
+     * 注册中心密码
      */
     private String password;
 
     /**
-     * Default port for register center
+     * 注册中心端口
      */
     private Integer port;
 
     /**
-     * Protocol for register center
+     * 注册中心协议
      */
     private String protocol;
 
     /**
-     * Network transmission type
+     * 网络传输类型
      */
     private String transporter;
 
@@ -85,12 +85,12 @@ public class RegistryConfig extends AbstractConfig {
     private String version;
 
     /**
-     * Request timeout in milliseconds for register center
+     * 请求注册中心超时时间,毫秒
      */
     private Integer timeout;
 
     /**
-     * Session timeout in milliseconds for register center
+     * 会话超时时间,毫秒
      */
     private Integer session;
 

@@ -55,7 +55,7 @@ import static org.apache.dubbo.config.Constants.TEST_ENVIRONMENT;
 
 
 /**
- * The application info
+ * 应用程序信息
  *
  * @export
  */
@@ -64,12 +64,12 @@ public class ApplicationConfig extends AbstractConfig {
     private static final long serialVersionUID = 5508512956753757169L;
 
     /**
-     * Application name
+     * 程序名称
      */
     private String name;
 
     /**
-     * The application version
+     * 版本
      */
     private String version;
 
@@ -89,7 +89,7 @@ public class ApplicationConfig extends AbstractConfig {
     private String architecture;
 
     /**
-     * Environment, e.g. dev, test or production
+     * 环境, 比如 dev, test or production
      */
     private String environment;
 
@@ -104,18 +104,18 @@ public class ApplicationConfig extends AbstractConfig {
     private String logger;
 
     /**
-     * Registry centers
+     * 注册中心
      */
     private List<RegistryConfig> registries;
     private String registryIds;
 
     /**
-     * Monitor center
+     * 监控中心
      */
     private MonitorConfig monitor;
 
     /**
-     * Is default or not
+     * 是否默认的
      */
     private Boolean isDefault;
 

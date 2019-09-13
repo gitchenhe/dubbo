@@ -213,6 +213,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
      * Check each config modules are created properly and override their properties if necessary.
      */
     public void checkAndUpdateSubConfigs() {
+        //接口名是否存在
         if (StringUtils.isEmpty(interfaceName)) {
             throw new IllegalStateException("<dubbo:reference interface=\"\" /> interface not allow null!");
         }
@@ -241,6 +242,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     }
 
     public synchronized T get() {
+
         checkAndUpdateSubConfigs();
 
         if (destroyed) {
