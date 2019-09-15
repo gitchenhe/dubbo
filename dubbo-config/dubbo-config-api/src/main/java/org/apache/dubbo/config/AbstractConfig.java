@@ -57,47 +57,47 @@ public abstract class AbstractConfig implements Serializable {
     private static final long serialVersionUID = 4267533505537413570L;
 
     /**
-     * The maximum length of a <b>parameter's value</b>
+     * 参数值最大长度
      */
     private static final int MAX_LENGTH = 200;
 
     /**
-     * The maximum length of a <b>path</b>
+     * 路径最大长度
      */
     private static final int MAX_PATH_LENGTH = 200;
 
     /**
-     * The rule qualification for <b>name</b>
+     * name的规则
      */
     private static final Pattern PATTERN_NAME = Pattern.compile("[\\-._0-9a-zA-Z]+");
 
     /**
-     * The rule qualification for <b>multiply name</b>
+     * 多个name的规则校验
      */
     private static final Pattern PATTERN_MULTI_NAME = Pattern.compile("[,\\-._0-9a-zA-Z]+");
 
     /**
-     * The rule qualification for <b>method names</b>
+     * 方法名称的规则
      */
     private static final Pattern PATTERN_METHOD_NAME = Pattern.compile("[a-zA-Z][0-9a-zA-Z]*");
 
     /**
-     * The rule qualification for <b>path</b>
+     * 路径的规则
      */
     private static final Pattern PATTERN_PATH = Pattern.compile("[/\\-$._0-9a-zA-Z]+");
 
     /**
-     * The pattern matches a value who has a symbol
+     * 匹配含有符号的值
      */
     private static final Pattern PATTERN_NAME_HAS_SYMBOL = Pattern.compile("[:*,\\s/\\-._0-9a-zA-Z]+");
 
     /**
-     * The pattern matches a property key
+     *  property key
      */
     private static final Pattern PATTERN_KEY = Pattern.compile("[*,\\-._0-9a-zA-Z]+");
 
     /**
-     * The legacy properties container
+     * 旧版属性容器
      */
     private static final Map<String, String> LEGACY_PROPERTIES = new HashMap<String, String>();
 
@@ -126,6 +126,12 @@ public abstract class AbstractConfig implements Serializable {
     protected String id;
     protected String prefix;
 
+    /**
+     * 转换旧版本的值
+     * @param key
+     * @param value
+     * @return
+     */
     private static String convertLegacyValue(String key, String value) {
         if (value != null && value.length() > 0) {
             if ("dubbo.service.max.retry.providers".equals(key)) {

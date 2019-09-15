@@ -23,17 +23,24 @@ import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.config.RegistryConfig;
 import org.apache.dubbo.demo.DemoService;
 
+import java.util.concurrent.TimeUnit;
+
 public class Application {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ReferenceConfig<DemoService> reference = new ReferenceConfig<>();
         reference.setApplication(new ApplicationConfig("dubbo-demo-api-consumer"));
-        RegistryConfig registryConfig = new RegistryConfig("redis://172.19.60.138:6379");
-        registryConfig.setUsername("admin");
-        registryConfig.setPassword("123456");
+        RegistryConfig registryConfig = new RegistryConfig("redis://127.0.0.1:6379");
+        //registryConfig.setUsername("admin");
+        //registryConfig.setPassword("123456");
         reference.setRegistry(registryConfig);
         reference.setInterface(DemoService.class);
         DemoService service = reference.get();
-        String message = service.sayHello("dubbo");
-        System.out.println(message);
+        while (true){
+            String message = service.sayHello("dubbo");
+            System.out.println(message);
+
+            TimeUnit.SECONDS.sleep(1);
+        }
+
     }
 }
