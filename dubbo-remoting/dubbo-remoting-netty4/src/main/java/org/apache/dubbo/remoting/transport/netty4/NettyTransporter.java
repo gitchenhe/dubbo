@@ -17,6 +17,8 @@
 package org.apache.dubbo.remoting.transport.netty4;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.logger.Logger;
+import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.Client;
 import org.apache.dubbo.remoting.RemotingException;
@@ -28,6 +30,7 @@ import org.apache.dubbo.remoting.Transporter;
  */
 public class NettyTransporter implements Transporter {
 
+    private static final Logger logger = LoggerFactory.getLogger(NettyTransporter.class);
     public static final String NAME = "netty";
 
     @Override
@@ -37,6 +40,7 @@ public class NettyTransporter implements Transporter {
 
     @Override
     public Client connect(URL url, ChannelHandler listener) throws RemotingException {
+        logger.info("创建Netty客户端");
         return new NettyClient(url, listener);
     }
 

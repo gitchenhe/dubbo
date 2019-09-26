@@ -275,13 +275,16 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (initialized) {
             return;
         }
+        logger.info("初始化连接");
+        //本地存根合法性校验,有什么用?
         checkStubAndLocal(interfaceClass);
+        //检查是否有mock方法
         checkMock(interfaceClass);
         Map<String, String> map = new HashMap<String, String>();
-
         map.put(SIDE_KEY, CONSUMER_SIDE);
-
+        //添加环境参数
         appendRuntimeParameters(map);
+
         if (!ProtocolUtils.isGeneric(getGeneric())) {
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
@@ -320,6 +323,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
         }
 
+        //获取本地ip
         String hostToRegistry = ConfigUtils.getSystemProperty(DUBBO_IP_TO_REGISTRY);
         if (StringUtils.isEmpty(hostToRegistry)) {
             hostToRegistry = NetUtils.getLocalHost();
@@ -349,17 +353,27 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         return new ConsumerModel(serviceKey, serviceInterface, ref, methods, attributes);
     }
 
+    /**
+     * 创建代理对象
+     * @param map
+     * @return
+     */
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
+        logger.info("创建代理");
         if (shouldJvmRefer(map)) {
+            //生成本地调用url,协议为inJvm
             URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
+            //调用refer方法构建InJvmInvoker实例
             invoker = REF_PROTOCOL.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
+            //urls不为空,则表明用户可能想进行点对点调用
             urls.clear(); // reference retry init will add url to urls, lead to OOM
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
+                //当配置多个url时,可用分号分隔,这里会进行切割
                 String[] us = SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
                     for (String u : us) {
@@ -437,13 +451,14 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     /**
      * Figure out should refer the service in the same JVM from configurations. The default behavior is true
-     * 1. if injvm is specified, then use it
-     * 2. then if a url is specified, then assume it's a remote call
-     * 3. otherwise, check scope parameter
-     * 4. if scope is not specified but the target service is provided in the same JVM, then prefer to make the local
+     * 1. 如果指定了inJvm,则使用它
+     * 2. 如果指定了网址,则假设它是远程调用
+     * 3. 否则,检查范围参数
+     * 4. 如果未指定范围,但在同一JVM中提供目标服务, 则更喜欢进行本地调用,这是默认行为
      * call, which is the default behavior
      */
     protected boolean shouldJvmRefer(Map<String, String> map) {
+        //生成本地引用url
         URL tmpUrl = new URL("temp", "localhost", 0, map);
         boolean isJvmRefer;
         if (isInjvm() == null) {

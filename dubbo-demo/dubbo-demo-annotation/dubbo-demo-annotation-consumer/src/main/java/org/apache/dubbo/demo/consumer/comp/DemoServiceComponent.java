@@ -33,4 +33,9 @@ public class DemoServiceComponent implements DemoService {
     public String sayHello(String name) {
         return demoService.sayHello(name);
     }
+
+    @Override
+    public String sayYes(int times) {
+        return null;
+    }
 }

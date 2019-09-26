@@ -25,7 +25,7 @@ import org.apache.dubbo.rpc.Protocol;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * The shutdown hook thread to do the clean up stuff.
+ * 线程关闭钩子,用来释放资源
  * This is a singleton in order to ensure there is only one shutdown hook registered.
  * Because {@link ApplicationShutdownHooks} use {@link java.util.IdentityHashMap}
  * to store the shutdown hooks.
@@ -54,6 +54,7 @@ public class DubboShutdownHook extends Thread {
 
     @Override
     public void run() {
+        //线程停止的时候, 会调用到这里
         if (logger.isInfoEnabled()) {
             logger.info("Run shutdown hook now.");
         }

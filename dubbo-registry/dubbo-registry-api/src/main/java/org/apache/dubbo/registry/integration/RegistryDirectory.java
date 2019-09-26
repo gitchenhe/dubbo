@@ -420,7 +420,8 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         enabled = url.getParameter(ENABLED_KEY, true);
                     }
                     if (enabled) {
-                        invoker = new InvokerDelegate<>(protocol.refer(serviceType, url), url, providerUrl);
+                        Invoker invoker1 = protocol.refer(serviceType, url);
+                        invoker = new InvokerDelegate<>(invoker1, url, providerUrl);
                     }
                 } catch (Throwable t) {
                     logger.error("Failed to refer invoker for interface:" + serviceType + ",url:(" + url + ")" + t.getMessage(), t);

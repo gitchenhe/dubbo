@@ -511,6 +511,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     }
 
     /**
+     *  本地存根合法性校验,有什么用?
+     *
      * Legitimacy check of stub, note that: the local will deprecated, and replace with <code>stub</code>
      *
      * @param interfaceClass for provider side, it is the {@link Class} of the service that will be exported; for consumer
@@ -518,8 +520,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
      */
     void checkStubAndLocal(Class<?> interfaceClass) {
         if (ConfigUtils.isNotEmpty(local)) {
-            Class<?> localClass = ConfigUtils.isDefault(local) ?
-                    ReflectUtils.forName(interfaceClass.getName() + "Local") : ReflectUtils.forName(local);
+            Class<?> localClass = ConfigUtils.isDefault(local) ? ReflectUtils.forName(interfaceClass.getName() + "Local") : ReflectUtils.forName(local);
             verify(interfaceClass, localClass);
         }
         if (ConfigUtils.isNotEmpty(stub)) {
