@@ -17,6 +17,7 @@
 package org.apache.dubbo.common;
 
 /**
+ * 节点,提供节点url,节点是否有效,注销操作
  * Node. (API/SPI, Prototype, ThreadSafe)
  */
 public interface Node {

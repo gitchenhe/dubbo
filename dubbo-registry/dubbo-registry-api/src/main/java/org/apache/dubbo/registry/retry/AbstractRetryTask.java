@@ -34,7 +34,7 @@ import static org.apache.dubbo.registry.Constants.REGISTRY_RETRY_PERIOD_KEY;
 import static org.apache.dubbo.registry.Constants.REGISTRY_RETRY_TIMES_KEY;
 
 /**
- * AbstractRetryTask
+ * 认为重试
  */
 public abstract class AbstractRetryTask implements TimerTask {
 
@@ -93,6 +93,11 @@ public abstract class AbstractRetryTask implements TimerTask {
         return cancel;
     }
 
+    /**
+     * 延迟tick毫秒后重新执行任务
+     * @param timeout
+     * @param tick
+     */
     protected void reput(Timeout timeout, long tick) {
         if (timeout == null) {
             throw new IllegalArgumentException();

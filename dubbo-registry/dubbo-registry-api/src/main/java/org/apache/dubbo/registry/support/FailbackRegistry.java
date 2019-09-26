@@ -49,14 +49,30 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     /*  retry task map */
 
+    /**
+     * 注册任务
+     */
     private final ConcurrentMap<URL, FailedRegisteredTask> failedRegistered = new ConcurrentHashMap<URL, FailedRegisteredTask>();
 
+
+    /**
+     * 取消注册 任务
+     */
     private final ConcurrentMap<URL, FailedUnregisteredTask> failedUnregistered = new ConcurrentHashMap<URL, FailedUnregisteredTask>();
 
+    /**
+     * 订阅任务
+     */
     private final ConcurrentMap<Holder, FailedSubscribedTask> failedSubscribed = new ConcurrentHashMap<Holder, FailedSubscribedTask>();
 
+    /**
+     * 取消订阅任务
+     */
     private final ConcurrentMap<Holder, FailedUnsubscribedTask> failedUnsubscribed = new ConcurrentHashMap<Holder, FailedUnsubscribedTask>();
 
+    /**
+     * 通知失败任务
+     */
     private final ConcurrentMap<Holder, FailedNotifiedTask> failedNotified = new ConcurrentHashMap<Holder, FailedNotifiedTask>();
 
     /**
@@ -70,7 +86,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     public FailbackRegistry(URL url) {
         super(url);
         this.retryPeriod = url.getParameter(REGISTRY_RETRY_PERIOD_KEY, DEFAULT_REGISTRY_RETRY_PERIOD);
-
+        logger.info("注册中心的重试时间间隔:"+retryPeriod);
         // since the retry task will not be very much. 128 ticks is enough.
         retryTimer = new HashedWheelTimer(new NamedThreadFactory("DubboRegistryRetryTimer", true), retryPeriod, TimeUnit.MILLISECONDS, 128);
     }
@@ -228,16 +244,21 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     @Override
     public void register(URL url) {
+        //注册,父类只是把url,添加到内存一份
         super.register(url);
+        //移除注册失败的任务
         removeFailedRegistered(url);
+        // 从'取消注册'队列
         removeFailedUnregistered(url);
+
         try {
-            // Sending a registration request to the server side
+            logger.info("将url注册到注册中心,地址:"+url);
             doRegister(url);
         } catch (Exception e) {
             Throwable t = e;
 
             // If the startup detection is opened, the Exception is thrown directly.
+            //如果启动了'启动检查',直接抛出异常
             boolean check = getUrl().getParameter(Constants.CHECK_KEY, true)
                     && url.getParameter(Constants.CHECK_KEY, true)
                     && !CONSUMER_PROTOCOL.equals(url.getProtocol());
@@ -252,17 +273,21 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             }
 
             // Record a failed registration request to a failed list, retry regularly
+            logger.info("注册异常,将'"+url+"'添加到重试任务");
+
             addFailedRegistered(url);
         }
     }
 
     @Override
     public void unregister(URL url) {
+        //父类将url,从内存移除
         super.unregister(url);
         removeFailedRegistered(url);
         removeFailedUnregistered(url);
         try {
             // Sending a cancellation request to the server side
+            logger.info("通知注册中心,解除注册:"+url);
             doUnregister(url);
         } catch (Exception e) {
             Throwable t = e;
@@ -282,22 +307,26 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             }
 
             // Record a failed registration request to a failed list, retry regularly
+            logger.info("取消注册异常,将'"+url+"'添加到重试任务");
             addFailedUnregistered(url);
         }
     }
 
     @Override
     public void subscribe(URL url, NotifyListener listener) {
+        //父类内存订阅
         super.subscribe(url, listener);
+        //移除订阅失败任务
         removeFailedSubscribed(url, listener);
         try {
-            // 向redis server 发送订阅请求
+            logger.info("向注册中心发送订阅请求:"+url);
             doSubscribe(url, listener);
         } catch (Exception e) {
             Throwable t = e;
 
             List<URL> urls = getCacheUrls(url);
             if (CollectionUtils.isNotEmpty(urls)) {
+                //发布订阅通知.这里是保证在与注册中心通信失败的情况下,可以更新本地缓存
                 notify(url, listener, urls);
                 logger.error("Failed to subscribe " + url + ", Using cached list: " + urls + " from cache file: " + getUrl().getParameter(FILE_KEY, System.getProperty("user.home") + "/dubbo-registry-" + url.getHost() + ".cache") + ", cause: " + t.getMessage(), t);
             } else {
@@ -316,16 +345,18 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             }
 
             // Record a failed registration request to a failed list, retry regularly
+            logger.info("添加订阅失败重试任务,地址:"+url);
             addFailedSubscribed(url, listener);
         }
     }
 
     @Override
     public void unsubscribe(URL url, NotifyListener listener) {
+        //父类内存移除订阅
         super.unsubscribe(url, listener);
         removeFailedSubscribed(url, listener);
         try {
-            // Sending a canceling subscription request to the server side
+            logger.info("向注册中心发送取消订阅请求:"+url);
             doUnsubscribe(url, listener);
         } catch (Exception e) {
             Throwable t = e;
@@ -359,7 +390,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         try {
             doNotify(url, listener, urls);
         } catch (Exception t) {
-            // Record a failed registration request to a failed list, retry regularly
+            logger.info("添加通知失败重试任务:"+url);
             addFailedNotified(url, listener, urls);
             logger.error("Failed to notify for subscribe " + url + ", waiting for retry, cause: " + t.getMessage(), t);
         }
@@ -371,7 +402,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     @Override
     protected void recover() throws Exception {
-        // register
+        // 恢复注册服务
         Set<URL> recoverRegistered = new HashSet<URL>(getRegistered());
         if (!recoverRegistered.isEmpty()) {
             if (logger.isInfoEnabled()) {
@@ -381,7 +412,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
                 addFailedRegistered(url);
             }
         }
-        // subscribe
+        // 恢复订阅服务
         Map<URL, Set<NotifyListener>> recoverSubscribed = new HashMap<URL, Set<NotifyListener>>(getSubscribed());
         if (!recoverSubscribed.isEmpty()) {
             if (logger.isInfoEnabled()) {

@@ -131,6 +131,7 @@ public class RedisRegistry extends FailbackRegistry {
 
     //构造函数中主要完成了redis连接相关的操作
     public RedisRegistry(URL url) {
+        //调用父类注册(内存)
         super(url);
         logger.info("初始化jedis连接 " + url);
 
@@ -380,10 +381,14 @@ public class RedisRegistry extends FailbackRegistry {
     public void doRegister(URL url) {
         //获得分类路径
         String key = toCategoryPath(url);
+        logger.info("分类路径:"+key);
         //获得url字符串作为value
         String value = url.toFullString();
+        logger.info("url:"+value);
         //计算超时时间
         String expire = String.valueOf(System.currentTimeMillis() + expirePeriod);
+        logger.info("超时时间:"+expire);
+
         boolean success = false;
         RpcException exception = null;
         //遍历连接
@@ -455,6 +460,7 @@ public class RedisRegistry extends FailbackRegistry {
     public void doSubscribe(final URL url, final NotifyListener listener) {
         //返回服务地址
         String service = toServicePath(url);
+        logger.info("service:"+service);
         //获得通知器
         Notifier notifier = notifiers.get(service);
         if (notifier == null) {
@@ -467,12 +473,14 @@ public class RedisRegistry extends FailbackRegistry {
                 notifier.start();
             }
         }
+
         boolean success = false;
         RpcException exception = null;
         for (Map.Entry<String, JedisPool> entry : jedisPools.entrySet()) {
             JedisPool jedisPool = entry.getValue();
             try {
                 try (Jedis jedis = jedisPool.getResource()) {
+                    //是否以*结尾
                     if (service.endsWith(ANY_VALUE)) {
                         admin = true;
                         Set<String> keys = jedis.keys(service);
@@ -480,10 +488,12 @@ public class RedisRegistry extends FailbackRegistry {
                             Map<String, Set<String>> serviceKeys = new HashMap<>();
                             for (String key : keys) {
                                 String serviceKey = toServicePath(key);
+                                logger.info("service key = " + serviceKey);
                                 Set<String> sk = serviceKeys.computeIfAbsent(serviceKey, k -> new HashSet<>());
                                 sk.add(key);
                             }
                             for (Set<String> sk : serviceKeys.values()) {
+                                //通知订阅者
                                 doNotify(jedis, sk, url, Collections.singletonList(listener));
                             }
                         }

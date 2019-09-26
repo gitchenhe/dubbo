@@ -265,6 +265,8 @@ public class ConfigManager {
             return;
         }
 
+        logger.info("添加注册中心配置:"+registryConfig.getProtocol()+" -- "+registryConfig.getAddress());
+
         String key = StringUtils.isNotEmpty(registryConfig.getId())
                 ? registryConfig.getId()
                 : (registryConfig.isDefault() == null || registryConfig.isDefault()) ? DEFAULT_KEY : null;
