@@ -87,7 +87,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+        //对SpringFactory进行扩展
         SpringExtensionFactory.addApplicationContext(applicationContext);
+        //将自己作为订阅者,订阅容器所有生命周期事件
         supportedApplicationListener = addApplicationListener(applicationContext, this);
     }
 
@@ -107,10 +109,12 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        //服务没有发布过,服务没有下线过
         if (!isExported() && !isUnexported()) {
             if (logger.isInfoEnabled()) {
                 logger.info("The service ready on spring started. service: " + getInterface());
             }
+            logger.info("暴露服务");
             export();
         }
     }
@@ -118,13 +122,18 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     @Override
     @SuppressWarnings({"unchecked", "deprecation"})
     public void afterPropertiesSet() throws Exception {
+
+        //对应于配置 dubbo:provider
         if (getProvider() == null) {
+            //获取ProviderConfig,及所有子类实现
             Map<String, ProviderConfig> providerConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProviderConfig.class, false, false);
             if (providerConfigMap != null && providerConfigMap.size() > 0) {
+                //获取协议信息
                 Map<String, ProtocolConfig> protocolConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProtocolConfig.class, false, false);
-                if (CollectionUtils.isEmptyMap(protocolConfigMap)
-                        && providerConfigMap.size() > 1) { // backward compatibility
+                //协议配置为空,但是有服务提供者配置
+                if (CollectionUtils.isEmptyMap(protocolConfigMap) && providerConfigMap.size() > 1) { // backward compatibility
                     List<ProviderConfig> providerConfigs = new ArrayList<ProviderConfig>();
+                    //遍历服务提供者配置
                     for (ProviderConfig config : providerConfigMap.values()) {
                         if (config.isDefault() != null && config.isDefault()) {
                             providerConfigs.add(config);
@@ -149,8 +158,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
-        if (getApplication() == null
-                && (getProvider() == null || getProvider().getApplication() == null)) {
+        //如果当前ServiceBan的application为空，则为该Service设置application
+        //对应于 dubbo:application
+        if (getApplication() == null && (getProvider() == null || getProvider().getApplication() == null)) {
             Map<String, ApplicationConfig> applicationConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ApplicationConfig.class, false, false);
             if (applicationConfigMap != null && applicationConfigMap.size() > 0) {
                 ApplicationConfig applicationConfig = null;
@@ -165,6 +175,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+
+        //如果当前ServiceBean的module为空,则为该ServiceBean设置module
+        //对应于 dubbo:module
         if (getModule() == null
                 && (getProvider() == null || getProvider().getModule() == null)) {
             Map<String, ModuleConfig> moduleConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ModuleConfig.class, false, false);
@@ -193,6 +206,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //对应于 dubbo:registry
         if ((CollectionUtils.isEmpty(getRegistries()))
                 && (getProvider() == null || CollectionUtils.isEmpty(getProvider().getRegistries()))
                 && (getApplication() == null || CollectionUtils.isEmpty(getApplication().getRegistries()))) {
@@ -237,6 +251,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //对应于 dubbo:monitor
         if (getMonitor() == null
                 && (getProvider() == null || getProvider().getMonitor() == null)
                 && (getApplication() == null || getApplication().getMonitor() == null)) {
@@ -278,7 +293,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 setProtocolIds(getProvider().getProtocolIds());
             }
         }
-
+        //对应于dubbo:protocol
         if (CollectionUtils.isEmpty(getProtocols())
                 && (getProvider() == null || CollectionUtils.isEmpty(getProvider().getProtocols()))) {
             Map<String, ProtocolConfig> protocolConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProtocolConfig.class, false, false);

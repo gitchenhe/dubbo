@@ -191,6 +191,13 @@ public class RegistryProtocol implements Protocol {
         registry.unregister(registeredProviderUrl);
     }
 
+    /**
+     * final 修饰,说明不允许被修改
+     * @param originInvoker
+     * @param <T>
+     * @return
+     * @throws RpcException
+     */
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
         URL registryUrl = getRegistryUrl(originInvoker);
@@ -242,6 +249,7 @@ public class RegistryProtocol implements Protocol {
         String key = getCacheKey(originInvoker);
 
         return (ExporterChangeableWrapper<T>) bounds.computeIfAbsent(key, s -> {
+            //providerUrl的委托调用者
             Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);
             return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);
         });
@@ -404,15 +412,23 @@ public class RegistryProtocol implements Protocol {
         // all attributes of REFER_KEY
         Map<String, String> parameters = new HashMap<String, String>(directory.getUrl().getParameters());
         URL subscribeUrl = new URL(CONSUMER_PROTOCOL, parameters.remove(REGISTER_IP_KEY), 0, type.getName(), parameters);
+        //特定Service
         if (!ANY_VALUE.equals(url.getServiceInterface()) && url.getParameter(REGISTER_KEY, true)) {
             directory.setRegisteredConsumerUrl(getRegisteredConsumerUrl(subscribeUrl, url));
+            logger.debug("注册数据:"+directory.getRegisteredConsumerUrl());
             registry.register(directory.getRegisteredConsumerUrl());
         }
+        logger.debug("构建路由调用链");
         directory.buildRouterChain(subscribeUrl);
-        directory.subscribe(subscribeUrl.addParameter(CATEGORY_KEY,
-                PROVIDERS_CATEGORY + "," + CONFIGURATORS_CATEGORY + "," + ROUTERS_CATEGORY));
+        URL subscribeUrlStr = subscribeUrl.addParameter(CATEGORY_KEY,
+                PROVIDERS_CATEGORY + "," + CONFIGURATORS_CATEGORY + "," + ROUTERS_CATEGORY);
 
+        logger.debug("订阅:"+subscribeUrlStr);
+        directory.subscribe(subscribeUrlStr);
+
+        logger.debug("创建Invoker");
         Invoker invoker = cluster.join(directory);
+
         ProviderConsumerRegTable.registerConsumer(invoker, url, subscribeUrl, directory);
         return invoker;
     }
@@ -458,6 +474,10 @@ public class RegistryProtocol implements Protocol {
         return url;
     }
 
+    /**
+     * 委托调用
+     * @param <T>
+     */
     public static class InvokerDelegate<T> extends InvokerWrapper<T> {
         private final Invoker<T> invoker;
 
@@ -639,9 +659,13 @@ public class RegistryProtocol implements Protocol {
 
         private final ExecutorService executor = newSingleThreadExecutor(new NamedThreadFactory("Exporter-Unexport", true));
 
+        //原始的代理
         private final Invoker<T> originInvoker;
+        //代理暴露
         private Exporter<T> exporter;
+        //订阅url
         private URL subscribeUrl;
+        //注册url
         private URL registerUrl;
 
         public ExporterChangeableWrapper(Exporter<T> exporter, Invoker<T> originInvoker) {
@@ -669,6 +693,7 @@ public class RegistryProtocol implements Protocol {
 
             Registry registry = RegistryProtocol.INSTANCE.getRegistry(originInvoker);
             try {
+                //取消订阅
                 registry.unregister(registerUrl);
             } catch (Throwable t) {
                 logger.warn(t.getMessage(), t);

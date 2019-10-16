@@ -19,6 +19,8 @@ package org.apache.dubbo.remoting.exchange;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.Version;
 import org.apache.dubbo.common.extension.ExtensionLoader;
+import org.apache.dubbo.common.logger.Logger;
+import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.Constants;
 import org.apache.dubbo.remoting.RemotingException;
@@ -31,6 +33,7 @@ import org.apache.dubbo.remoting.transport.ChannelHandlerAdapter;
  */
 public class Exchangers {
 
+    static Logger logger = LoggerFactory.getLogger(Exchangers.class);
     static {
         // check duplicate jar package
         Version.checkDuplicate(Exchangers.class);
@@ -106,11 +109,17 @@ public class Exchangers {
             throw new IllegalArgumentException("handler == null");
         }
         url = url.addParameterIfAbsent(Constants.CODEC_KEY, "exchange");
-        return getExchanger(url).connect(url, handler);
+        logger.debug("获取exchanger");
+        Exchanger exchanger = getExchanger(url);
+        logger.debug("exchanger 连接 url");
+        ExchangeClient exchangeClient = exchanger.connect(url, handler);
+        logger.debug("exchange client 创建成功");
+        return exchangeClient;
     }
 
     public static Exchanger getExchanger(URL url) {
         String type = url.getParameter(Constants.EXCHANGER_KEY, Constants.DEFAULT_EXCHANGER);
+        logger.debug("选中的exchanger为:"+type);
         return getExchanger(type);
     }
 

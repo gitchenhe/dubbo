@@ -44,12 +44,15 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
     // logger
     private static final Logger logger = LoggerFactory.getLogger(AbstractDirectory.class);
 
+    //地址
     private final URL url;
 
     private volatile boolean destroyed = false;
 
+    //消费者url
     private volatile URL consumerUrl;
 
+    //路由链路
     protected RouterChain<T> routerChain;
 
     public AbstractDirectory(URL url) {
@@ -65,6 +68,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
             throw new IllegalArgumentException("url == null");
         }
 
+        //如果是注册中心
         if (url.getProtocol().equals(REGISTRY_PROTOCOL)) {
             Map<String, String> queryMap = StringUtils.parseQueryString(url.getParameterAndDecoded(REFER_KEY));
             this.url = url.addParameters(queryMap).removeParameter(MONITOR_KEY);

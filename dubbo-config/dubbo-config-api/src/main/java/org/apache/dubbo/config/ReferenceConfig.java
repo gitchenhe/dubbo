@@ -407,7 +407,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                     }
                 }
             }
-
+            logger.debug("创建["+interfaceClass+"]的代理");
             if (urls.size() == 1) {
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             } else {
@@ -446,6 +446,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             metadataReportService.publishConsumer(consumerURL);
         }
         // create service proxy
+        logger.debug("创建Service proxy");
         return (T) PROXY_FACTORY.getProxy(invoker);
     }
 

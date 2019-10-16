@@ -277,6 +277,8 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             if (invokerUrls.isEmpty()) {
                 return;
             }
+
+            logger.info("创建url与invoker的映射关系");
             Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map
 
             /**
@@ -371,13 +373,16 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      */
     private Map<String, Invoker<T>> toInvokers(List<URL> urls) {
         Map<String, Invoker<T>> newUrlInvokerMap = new HashMap<>();
+        //地址为空
         if (urls == null || urls.isEmpty()) {
             return newUrlInvokerMap;
         }
         Set<String> keys = new HashSet<>();
         String queryProtocols = this.queryMap.get(PROTOCOL_KEY);
+        //遍历所有地址
         for (URL providerUrl : urls) {
             // If protocol is configured at the reference side, only the matching protocol is selected
+            logger.debug("url:"+providerUrl);
             if (queryProtocols != null && queryProtocols.length() > 0) {
                 boolean accept = false;
                 String[] acceptProtocols = queryProtocols.split(",");
@@ -401,8 +406,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         ExtensionLoader.getExtensionLoader(Protocol.class).getSupportedExtensions()));
                 continue;
             }
-            URL url = mergeUrl(providerUrl);
 
+            URL url = mergeUrl(providerUrl);
+            logger.debug("url merger 之后:"+url);
             String key = url.toFullString(); // The parameter urls are sorted
             if (keys.contains(key)) { // Repeated url
                 continue;
@@ -420,7 +426,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         enabled = url.getParameter(ENABLED_KEY, true);
                     }
                     if (enabled) {
+                        logger.info("创建url的invoke,serviceType="+serviceType+",url = "+url);
                         Invoker invoker1 = protocol.refer(serviceType, url);
+                        logger.info("invoke 创建完成:"+invoker1);
                         invoker = new InvokerDelegate<>(invoker1, url, providerUrl);
                     }
                 } catch (Throwable t) {

@@ -133,12 +133,14 @@ public class RedisRegistry extends FailbackRegistry {
     public RedisRegistry(URL url) {
         //调用父类注册(内存)
         super(url);
-        logger.info("初始化jedis连接 " + url);
+
+        logger.info("创建Redis注册中心 " + url);
 
         //判断地址是否为空
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
         }
+        logger.info("创建redis 连接池");
         //实例化对象池
         GenericObjectPoolConfig config = new GenericObjectPoolConfig();
         //如果testOnBorrower被设置,pool会在borrowerObject返回对象之前使用,PoolableObjectFactory的 validateObject 来验证这个对象是否有效

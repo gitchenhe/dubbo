@@ -243,6 +243,7 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
         }
 
         List<Invoker<T>> invokers = list(invocation);
+        logger.debug("初始化负载均衡");
         LoadBalance loadbalance = initLoadBalance(invokers, invocation);
         RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
         return doInvoke(invocation, invokers, loadbalance);

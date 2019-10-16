@@ -19,6 +19,8 @@ package org.apache.dubbo.rpc.protocol;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.ExtensionLoader;
+import org.apache.dubbo.common.logger.Logger;
+import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.rpc.Exporter;
 import org.apache.dubbo.rpc.Filter;
 import org.apache.dubbo.rpc.Invocation;
@@ -39,6 +41,7 @@ import static org.apache.dubbo.rpc.Constants.SERVICE_FILTER_KEY;
  */
 public class ProtocolFilterWrapper implements Protocol {
 
+    static Logger logger = LoggerFactory.getLogger(ProtocolFilterWrapper.class);
     private final Protocol protocol;
 
     public ProtocolFilterWrapper(Protocol protocol) {
@@ -53,9 +56,9 @@ public class ProtocolFilterWrapper implements Protocol {
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
-
         if (!filters.isEmpty()) {
             for (int i = filters.size() - 1; i >= 0; i--) {
+                logger.debug("激活的filter:"+filters.get(i) );
                 final Filter filter = filters.get(i);
                 final Invoker<T> next = last;
                 last = new Invoker<T>() {
@@ -79,6 +82,7 @@ public class ProtocolFilterWrapper implements Protocol {
                     public Result invoke(Invocation invocation) throws RpcException {
                         Result asyncResult;
                         try {
+                            logger.debug("调用invoke");
                             asyncResult = filter.invoke(next, invocation);
                         } catch (Exception e) {
                             // onError callback
@@ -127,7 +131,11 @@ public class ProtocolFilterWrapper implements Protocol {
         if (REGISTRY_PROTOCOL.equals(url.getProtocol())) {
             return protocol.refer(type, url);
         }
-        return buildInvokerChain(protocol.refer(type, url), REFERENCE_FILTER_KEY, CommonConstants.CONSUMER);
+        //构建代理调用链
+        Invoker invoker = protocol.refer(type, url);
+        invoker = buildInvokerChain(invoker, REFERENCE_FILTER_KEY, CommonConstants.CONSUMER);
+        logger.debug("构建代理调用链:"+invoker);
+        return invoker;
     }
 
     @Override
@@ -154,9 +162,12 @@ public class ProtocolFilterWrapper implements Protocol {
 
         @Override
         public Result invoke(Invocation invocation) throws RpcException {
+            logger.debug("可回调的Invoke");
+            //filterInvoker 是一个调用链条,在ProtocolFilterWrapper中定义
             Result asyncResult = filterInvoker.invoke(invocation);
 
             asyncResult = asyncResult.whenCompleteWithContext((r, t) -> {
+                logger.debug("Invoke future task 完成");
                 for (int i = filters.size() - 1; i >= 0; i--) {
                     Filter filter = filters.get(i);
                     // onResponse callback

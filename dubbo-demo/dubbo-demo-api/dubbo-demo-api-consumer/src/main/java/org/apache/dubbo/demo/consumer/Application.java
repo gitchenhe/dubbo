@@ -29,7 +29,7 @@ public class Application {
     public static void main(String[] args) throws InterruptedException {
         ReferenceConfig<DemoService> reference = new ReferenceConfig<>();
         reference.setApplication(new ApplicationConfig("dubbo-demo-api-consumer"));
-        RegistryConfig registryConfig = new RegistryConfig("redis://127.0.0.1:6379");
+        RegistryConfig registryConfig = new RegistryConfig("zookeeper://172.19.60.174:2181");
         //registryConfig.setUsername("admin");
         //registryConfig.setPassword("123456");
         reference.setRegistry(registryConfig);

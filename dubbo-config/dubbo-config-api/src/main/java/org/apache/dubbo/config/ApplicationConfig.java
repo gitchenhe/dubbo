@@ -409,7 +409,9 @@ public class ApplicationConfig extends AbstractConfig {
 
     @Override
     public void refresh() {
+        //父类设置参数值
         super.refresh();
+
         appendEnvironmentProperties();
     }
 

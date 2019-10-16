@@ -109,6 +109,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
 
     public static void sent(Channel channel, Request request) {
         DefaultFuture future = FUTURES.get(request.getId());
+        logger.debug("DefaultFuture 发送消息,消息id="+request.getId()+",future = null ? " + (future == null));
         if (future != null) {
             future.doSent();
         }
@@ -184,6 +185,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
             throw new IllegalStateException("response cannot be null");
         }
         if (res.getStatus() == Response.OK) {
+            logger.debug("请求响应OK");
             this.complete(res.getResult());
         } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
             this.completeExceptionally(new TimeoutException(res.getStatus() == Response.SERVER_TIMEOUT, channel, res.getErrorMessage()));

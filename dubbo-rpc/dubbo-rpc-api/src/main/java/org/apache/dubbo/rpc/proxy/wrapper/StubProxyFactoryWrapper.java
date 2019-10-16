@@ -69,7 +69,9 @@ public class StubProxyFactoryWrapper implements ProxyFactory {
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> T getProxy(Invoker<T> invoker) throws RpcException {
+        LOGGER.debug("创建代理");
         T proxy = proxyFactory.getProxy(invoker);
+
         if (GenericService.class != invoker.getInterface()) {
             URL url = invoker.getUrl();
             String stub = url.getParameter(STUB_KEY, url.getParameter(LOCAL_KEY));

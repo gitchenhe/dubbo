@@ -102,7 +102,7 @@ public class AdaptiveClassCodeGenerator {
         code.append("}");
 
         if (logger.isDebugEnabled()) {
-            logger.debug(code.toString());
+            //logger.debug(code.toString());
         }
         return code.toString();
     }

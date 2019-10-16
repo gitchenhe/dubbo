@@ -21,6 +21,7 @@ import org.apache.dubbo.common.URL;
 import java.util.List;
 
 /**
+ * 通知监听器
  * NotifyListener. (API, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.registry.RegistryService#subscribe(URL, NotifyListener)

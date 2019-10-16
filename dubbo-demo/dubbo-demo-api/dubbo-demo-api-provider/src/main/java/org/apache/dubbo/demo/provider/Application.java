@@ -27,7 +27,7 @@ public class Application {
     public static void main(String[] args) throws Exception {
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<>();
         service.setApplication(new ApplicationConfig("dubbo-demo-api-provider"));
-        RegistryConfig registryConfig = new RegistryConfig("redis://127.0.0.18:6379");
+        RegistryConfig registryConfig = new RegistryConfig("zookeeper://172.19.60.174:2181");
         //registryConfig.setUsername("admin");
         //registryConfig.setPassword("123456");
         service.setRegistry(registryConfig);

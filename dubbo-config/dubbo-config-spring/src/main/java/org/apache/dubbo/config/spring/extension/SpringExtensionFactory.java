@@ -40,7 +40,13 @@ import java.util.Set;
 public class SpringExtensionFactory implements ExtensionFactory {
     private static final Logger logger = LoggerFactory.getLogger(SpringExtensionFactory.class);
 
+    /**
+     * application context
+     */
     private static final Set<ApplicationContext> CONTEXTS = new ConcurrentHashSet<ApplicationContext>();
+    /**
+     * shutdown 钩子
+     */
     private static final ApplicationListener SHUTDOWN_HOOK_LISTENER = new ShutdownHookListener();
 
     public static void addApplicationContext(ApplicationContext context) {

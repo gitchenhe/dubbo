@@ -19,6 +19,8 @@ package org.apache.dubbo.remoting;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.Version;
 import org.apache.dubbo.common.extension.ExtensionLoader;
+import org.apache.dubbo.common.logger.Logger;
+import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.remoting.transport.ChannelHandlerAdapter;
 import org.apache.dubbo.remoting.transport.ChannelHandlerDispatcher;
 
@@ -26,6 +28,7 @@ import org.apache.dubbo.remoting.transport.ChannelHandlerDispatcher;
  * Transporter facade. (API, Static, ThreadSafe)
  */
 public class Transporters {
+    static Logger logger = LoggerFactory.getLogger(Transporters.class);
 
     static {
         // check duplicate jar package
@@ -72,7 +75,12 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter().connect(url, handler);
+        logger.debug("应该是马上要创建NettyClient(或Mina,Grizzly)了");
+        Transporter transporter = getTransporter();
+        logger.debug("获取Transport:"+transporter);
+        Client client = transporter.connect(url,handler);
+        logger.debug("client 创建成功:"+client);
+        return client;
     }
 
     public static Transporter getTransporter() {

@@ -122,7 +122,7 @@ public class DubboProtocol extends AbstractProtocol {
                         + (message == null ? null : (message.getClass().getName() + ": " + message))
                         + ", channel: consumer: " + channel.getRemoteAddress() + " --> provider: " + channel.getLocalAddress());
             }
-
+            logger.info("==========[reply]===========");
             Invocation inv = (Invocation) message;
             Invoker<?> invoker = getInvoker(channel, inv);
             // need to consider backward-compatibility if it's a callback
@@ -240,14 +240,16 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     Invoker<?> getInvoker(Channel channel, Invocation inv) throws RemotingException {
+        //是否是服务调用来的
         boolean isCallBackServiceInvoke = false;
         boolean isStubServiceInvoke = false;
         int port = channel.getLocalAddress().getPort();
         String path = inv.getAttachments().get(PATH_KEY);
 
-        // if it's callback service on client side
+        //如果是客户端调用过来的
         isStubServiceInvoke = Boolean.TRUE.toString().equals(inv.getAttachments().get(STUB_EVENT_KEY));
         if (isStubServiceInvoke) {
+            //获取远程端口,即客户端端口
             port = channel.getRemoteAddress().getPort();
         }
 
@@ -427,6 +429,7 @@ public class DubboProtocol extends AbstractProtocol {
             String shareConnectionsStr = url.getParameter(SHARE_CONNECTIONS_KEY, (String) null);
             connections = Integer.parseInt(StringUtils.isBlank(shareConnectionsStr) ? ConfigUtils.getProperty(SHARE_CONNECTIONS_KEY,
                     DEFAULT_SHARE_CONNECTIONS) : shareConnectionsStr);
+            logger.debug("获取共享的Client");
             shareClients = getSharedClient(url, connections);
         }
 
@@ -470,8 +473,9 @@ public class DubboProtocol extends AbstractProtocol {
             // connectNum must be greater than or equal to 1
             connectNum = Math.max(connectNum, 1);
 
-            // If the clients is empty, then the first initialization is
+            // 如果clients为空,先构建它
             if (CollectionUtils.isEmpty(clients)) {
+                logger.debug("Client 为空,构建它");
                 clients = buildReferenceCountExchangeClientList(url, connectNum);
                 referenceClientMap.put(key, clients);
 
@@ -560,6 +564,7 @@ public class DubboProtocol extends AbstractProtocol {
      * @return
      */
     private ReferenceCountExchangeClient buildReferenceCountExchangeClient(URL url) {
+        logger.debug("创建单例Client");
         ExchangeClient exchangeClient = initClient(url);
 
         return new ReferenceCountExchangeClient(exchangeClient);
@@ -589,9 +594,11 @@ public class DubboProtocol extends AbstractProtocol {
         try {
             // connection should be lazy
             if (url.getParameter(LAZY_CONNECT_KEY, false)) {
+                logger.info("构建 lazy_connect ExchangeClient");
                 client = new LazyConnectExchangeClient(url, requestHandler);
 
             } else {
+                logger.info("构建 ExchangeClient");
                 client = Exchangers.connect(url, requestHandler);
             }
 

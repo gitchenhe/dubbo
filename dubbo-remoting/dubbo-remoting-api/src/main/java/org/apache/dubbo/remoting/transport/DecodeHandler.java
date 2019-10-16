@@ -36,6 +36,7 @@ public class DecodeHandler extends AbstractChannelHandlerDelegate {
 
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
+        log.debug("收到消息:"+message);
         if (message instanceof Decodeable) {
             decode(message);
         }
@@ -47,7 +48,6 @@ public class DecodeHandler extends AbstractChannelHandlerDelegate {
         if (message instanceof Response) {
             decode(((Response) message).getResult());
         }
-
         handler.received(channel, message);
     }
 

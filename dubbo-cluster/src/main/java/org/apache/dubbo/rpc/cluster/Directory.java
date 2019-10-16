@@ -24,6 +24,7 @@ import org.apache.dubbo.rpc.RpcException;
 import java.util.List;
 
 /**
+ * 目录
  * Directory. (SPI, Prototype, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Directory_service">Directory Service</a>

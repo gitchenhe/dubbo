@@ -23,7 +23,7 @@ import org.apache.dubbo.rpc.Result;
 import org.apache.dubbo.rpc.RpcException;
 
 /**
- * InvokerWrapper
+ * Invoker的装饰模式
  */
 public class InvokerWrapper<T> implements Invoker<T> {
 

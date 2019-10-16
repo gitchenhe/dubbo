@@ -34,6 +34,7 @@ import org.apache.dubbo.rpc.RpcException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -66,6 +67,11 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final Set<String> anyServices = new ConcurrentHashSet<>();
 
+    /**
+     * key = url
+     * value = <通知监听器,触发孩子节点监听>
+     *
+     */
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<>();
 
     private final ZookeeperClient zkClient;
@@ -110,6 +116,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     public void doRegister(URL url) {
         try {
+            logger.info("[创建ZK节点] "+ toUrlPath(url)+", 是否动态:"+url.getParameter(DYNAMIC_KEY, true));
             zkClient.create(toUrlPath(url), url.getParameter(DYNAMIC_KEY, true));
         } catch (Throwable e) {
             throw new RpcException("Failed to register " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
@@ -125,59 +132,93 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    /**
+     * url :  zookeeper://zookeeper/*
+     * @param url
+     * @param listener
+     */
     @Override
     public void doSubscribe(final URL url, final NotifyListener listener) {
+        logger.info("zk 订阅URL:" + url);
         try {
+            /**
+             * @see ANY_VALUE 订阅节点的所有子节点
+             */
             if (ANY_VALUE.equals(url.getServiceInterface())) {
+                //根节点
                 String root = toRootPath();
+                //url的所有订阅者,及子节点的订阅者
                 ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
+                //订阅者为null,放一个空集合进去
                 if (listeners == null) {
                     zkListeners.putIfAbsent(url, new ConcurrentHashMap<>());
                     listeners = zkListeners.get(url);
                 }
+
+                //url变动时候,触发的子节点订阅服务
                 ChildListener zkListener = listeners.get(listener);
+                //没有子节点订阅服务
                 if (zkListener == null) {
-                    listeners.putIfAbsent(listener, (parentPath, currentChilds) -> {
+                    //这是一个回调? 节点有变动的时候,订阅节点下的所有子节点
+                    ChildListener childListener = (parentPath, currentChilds) -> {
+                        //遍历所有子节点
                         for (String child : currentChilds) {
                             child = URL.decode(child);
+                            //防止重复添加
                             if (!anyServices.contains(child)) {
                                 anyServices.add(child);
-                                subscribe(url.setPath(child).addParameters(INTERFACE_KEY, child,
-                                        Constants.CHECK_KEY, String.valueOf(false)), listener);
+                                //递归订阅所有子节点
+                                subscribe(url.setPath(child).addParameters(INTERFACE_KEY, child,Constants.CHECK_KEY, String.valueOf(false)),
+                                        listener);
                             }
                         }
-                    });
+                    };
+                    listeners.putIfAbsent(listener, childListener);
                     zkListener = listeners.get(listener);
                 }
+                //创建一个非持久化的zk节点
                 zkClient.create(root, false);
+                //zkListener 监听所有根节点的变动
+                //当有数据节点变更时,会通知到zkListener
                 List<String> services = zkClient.addChildListener(root, zkListener);
+
                 if (CollectionUtils.isNotEmpty(services)) {
                     for (String service : services) {
+                        logger.info("zk订阅服务:"+service);
                         service = URL.decode(service);
                         anyServices.add(service);
-                        subscribe(url.setPath(service).addParameters(INTERFACE_KEY, service,
-                                Constants.CHECK_KEY, String.valueOf(false)), listener);
+                        //订阅所有字节点
+                        URL subscribeUrl = url.setPath(service).addParameters(INTERFACE_KEY, service,Constants.CHECK_KEY, String.valueOf(false));
+                        //订阅服务
+                        subscribe(subscribeUrl, listener);
                     }
                 }
             } else {
+                //订阅明确的接口
                 List<URL> urls = new ArrayList<>();
+                //分类路径
                 for (String path : toCategoriesPath(url)) {
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
+                    //如果服务还没有订阅者,给它一个空的集合,防止空指针异常
                     if (listeners == null) {
                         zkListeners.putIfAbsent(url, new ConcurrentHashMap<>());
                         listeners = zkListeners.get(url);
                     }
+                    //获取或初始化根节点监听器
                     ChildListener zkListener = listeners.get(listener);
                     if (zkListener == null) {
                         listeners.putIfAbsent(listener, (parentPath, currentChilds) -> ZookeeperRegistry.this.notify(url, listener, toUrlsWithEmpty(url, parentPath, currentChilds)));
                         zkListener = listeners.get(listener);
                     }
+                    //创建节点
                     zkClient.create(path, false);
+                    //订阅节点
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
                     }
                 }
+                logger.debug("zk订阅");
                 notify(url, listener, urls);
             }
         } catch (Throwable e) {

@@ -294,8 +294,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         // Use default configs defined explicitly on global configs
         completeCompoundConfigs();
         // Config Center should always being started first.
+        logger.info("-----------------开始刷新配置信息-------------------");
         startConfigCenter();
+        logger.info("-----------------完成刷新配置信息-------------------");
+        //检查provider
         checkDefault();
+        //检查协议
         checkProtocol();
         checkApplication();
         // if protocol is not injvm checkRegistry
@@ -851,8 +855,10 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     private void createProviderIfAbsent() {
         if (provider != null) {
+            logger.info("Provider已存在,不重新创建");
             return;
         }
+        logger.info("创建Provider");
         setProvider(
                 ConfigManager.getInstance()
                         .getDefaultProvider()

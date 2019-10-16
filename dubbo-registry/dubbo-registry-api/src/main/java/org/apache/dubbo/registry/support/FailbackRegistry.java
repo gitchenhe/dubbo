@@ -157,6 +157,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     private void addFailedSubscribed(URL url, NotifyListener listener) {
         Holder h = new Holder(url, listener);
         FailedSubscribedTask oldOne = failedSubscribed.get(h);
+        //防止任务重新添加
         if (oldOne != null) {
             return;
         }
@@ -258,7 +259,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             Throwable t = e;
 
             // If the startup detection is opened, the Exception is thrown directly.
-            //如果启动了'启动检查',直接抛出异常
+            //如果配置'启动检查',直接抛出异常
             boolean check = getUrl().getParameter(Constants.CHECK_KEY, true)
                     && url.getParameter(Constants.CHECK_KEY, true)
                     && !CONSUMER_PROTOCOL.equals(url.getProtocol());
@@ -403,16 +404,19 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     @Override
     protected void recover() throws Exception {
         // 恢复注册服务
+        //本地保存的,已经注册的url
         Set<URL> recoverRegistered = new HashSet<URL>(getRegistered());
         if (!recoverRegistered.isEmpty()) {
             if (logger.isInfoEnabled()) {
                 logger.info("Recover register url " + recoverRegistered);
             }
             for (URL url : recoverRegistered) {
+                //添加异常重试注册任务
                 addFailedRegistered(url);
             }
         }
         // 恢复订阅服务
+        //本地已经订阅的服务列表
         Map<URL, Set<NotifyListener>> recoverSubscribed = new HashMap<URL, Set<NotifyListener>>(getSubscribed());
         if (!recoverSubscribed.isEmpty()) {
             if (logger.isInfoEnabled()) {
@@ -421,6 +425,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             for (Map.Entry<URL, Set<NotifyListener>> entry : recoverSubscribed.entrySet()) {
                 URL url = entry.getKey();
                 for (NotifyListener listener : entry.getValue()) {
+                    //添加错误重试订阅任务
                     addFailedSubscribed(url, listener);
                 }
             }

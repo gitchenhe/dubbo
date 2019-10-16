@@ -58,6 +58,8 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     }
 
     static void handleResponse(Channel channel, Response response) throws RemotingException {
+        logger.debug("处理响应:"+response);
+        //响应不为空,并且不是心跳检测
         if (response != null && !response.isHeartbeat()) {
             DefaultFuture.received(channel, response);
         }

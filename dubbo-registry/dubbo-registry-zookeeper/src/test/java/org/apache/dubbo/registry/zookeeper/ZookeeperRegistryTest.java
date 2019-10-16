@@ -17,6 +17,8 @@
 package org.apache.dubbo.registry.zookeeper;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.logger.Logger;
+import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.common.status.Status;
 import org.apache.dubbo.common.utils.NetUtils;
 import org.apache.dubbo.registry.NotifyListener;
@@ -40,13 +42,14 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.mock;
 
 public class ZookeeperRegistryTest {
     private TestingServer zkServer;
     private ZookeeperRegistry zookeeperRegistry;
     private String service = "org.apache.dubbo.test.injvmServie";
-    private URL serviceUrl = URL.valueOf("zookeeper://zookeeper/" + service + "?notify=false&methods=test1,test2");
+    private URL serviceUrl = URL.valueOf("zookeeper://172.19.60.174:2181/" + service + "?notify=false&methods=test1,test2");
     private URL anyUrl = URL.valueOf("zookeeper://zookeeper/*");
     private URL registryUrl;
     private ZookeeperRegistryFactory zookeeperRegistryFactory;
@@ -57,7 +60,7 @@ public class ZookeeperRegistryTest {
         this.zkServer = new TestingServer(zkServerPort, true);
         this.zkServer.start();
 
-        this.registryUrl = URL.valueOf("zookeeper://localhost:" + zkServerPort);
+        this.registryUrl = URL.valueOf("zookeeper://172.19.60.174:2181" );
         zookeeperRegistryFactory = new ZookeeperRegistryFactory();
         zookeeperRegistryFactory.setZookeeperTransporter(new CuratorZookeeperTransporter());
         this.zookeeperRegistry = (ZookeeperRegistry) zookeeperRegistryFactory.createRegistry(registryUrl);
@@ -87,6 +90,7 @@ public class ZookeeperRegistryTest {
         }
 
         registered = zookeeperRegistry.getRegistered();
+
         assertThat(registered.size(), is(1));
     }
 
@@ -105,6 +109,7 @@ public class ZookeeperRegistryTest {
         assertThat(subscribed.get(serviceUrl).size(), is(0));
     }
 
+    Logger logger = LoggerFactory.getLogger("");
     @Test
     public void testAvailable() {
         zookeeperRegistry.register(serviceUrl);

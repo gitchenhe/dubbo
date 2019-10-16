@@ -301,13 +301,20 @@ public class ConfigManager {
 
     public void refreshAll() {
         // refresh all configs here,
+        logger.info("配置应用信息");
         getApplication().ifPresent(ApplicationConfig::refresh);
+        logger.info("配置监控信息");
         getMonitor().ifPresent(MonitorConfig::refresh);
+        logger.info("配置模块信息");
         getModule().ifPresent(ModuleConfig::refresh);
 
+        logger.info("配置协议信息");
         getProtocols().values().forEach(ProtocolConfig::refresh);
+        logger.info("配置注册中心");
         getRegistries().values().forEach(RegistryConfig::refresh);
+        logger.info("配置提供者信息");
         getProviders().values().forEach(ProviderConfig::refresh);
+        logger.info("配置消费者信息");
         getConsumers().values().forEach(ConsumerConfig::refresh);
     }
 

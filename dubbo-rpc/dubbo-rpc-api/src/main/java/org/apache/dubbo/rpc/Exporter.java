@@ -26,14 +26,14 @@ package org.apache.dubbo.rpc;
 public interface Exporter<T> {
 
     /**
-     * get invoker.
+     * 获取代理
      *
      * @return invoker
      */
     Invoker<T> getInvoker();
 
     /**
-     * unexport.
+     * 取消暴露
      * <p>
      * <code>
      * getInvoker().destroy();

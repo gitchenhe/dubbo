@@ -392,9 +392,9 @@ public abstract class AbstractRegistry implements Registry {
     /**
      * 从提供方通知更改
      *
-     * @param url      consumer side url
+     * @param url      客户端订阅的路径,可能有*等模糊匹配
      * @param listener listener
-     * @param urls     provider latest urls
+     * @param urls     服务端被订阅的真实地址?
      */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
@@ -413,6 +413,7 @@ public abstract class AbstractRegistry implements Registry {
         // 区分提供者的类型
         Map<String, List<URL>> result = new HashMap<>();
         for (URL u : urls) {
+            //检查规则匹配
             if (UrlUtils.isMatch(url, u)) {
                 String category = u.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY);
                 List<URL> categoryList = result.computeIfAbsent(category, k -> new ArrayList<>());
